@@ -21,9 +21,6 @@ class DecoratedOrderItemResponseParser implements OrderItemResponseParserInterfa
      */
     private $modelManager;
 
-    /**
-     * DecoratedOrderItemResponseParser constructor.
-     */
     public function __construct(
         OrderItemResponseParserInterface $parentOrderItemResponseParser,
         ModelManager $modelManager
