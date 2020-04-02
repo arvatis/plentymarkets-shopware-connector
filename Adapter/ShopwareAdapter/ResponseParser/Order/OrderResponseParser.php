@@ -206,7 +206,6 @@ class OrderResponseParser implements OrderResponseParserInterface
 
         if (empty($entry['details'])) {
             $this->logger->warning('empty order positions - order: ' . $entry['number']);
-
             return false;
         }
 
