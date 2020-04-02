@@ -4,6 +4,7 @@ namespace ShopwareAdapter\ResponseParser\OrderItem;
 
 use Doctrine\ORM\EntityRepository;
 use Shopware\Models\Tax\Tax;
+use Shopware_Components_Config;
 use ShopwareAdapter\ResponseParser\GetAttributeTrait;
 use ShopwareAdapter\ShopwareAdapter;
 use SystemConnector\ConfigService\ConfigServiceInterface;
@@ -16,9 +17,9 @@ class OrderItemResponseParser implements OrderItemResponseParserInterface
 {
     use GetAttributeTrait;
 
-    const ITEM_TYPE_ID_VOUCHER = 2;
-    const ITEM_TYPE_ID_DISCOUNT = 3;
-    const ITEM_TYPE_ID_SURCHARGE = 4;
+    public const ITEM_TYPE_ID_VOUCHER = 2;
+    public const ITEM_TYPE_ID_DISCOUNT = 3;
+    public const ITEM_TYPE_ID_SURCHARGE = 4;
 
     /**
      * @var EntityRepository
@@ -35,14 +36,21 @@ class OrderItemResponseParser implements OrderItemResponseParserInterface
      */
     private $identityService;
 
+    /**
+     * @var Shopware_Components_Config
+     */
+    private $shopwareConfig;
+
     public function __construct(
         IdentityServiceInterface $identityService,
         EntityRepository $taxRepository,
-        ConfigServiceInterface $configService
+        ConfigServiceInterface $configService,
+        Shopware_Components_Config $shopwareConfig
     ) {
         $this->identityService = $identityService;
         $this->taxRepository = $taxRepository;
         $this->configService = $configService;
+        $this->shopwareConfig = $shopwareConfig;
     }
 
     /**
@@ -60,7 +68,7 @@ class OrderItemResponseParser implements OrderItemResponseParserInterface
          * @var OrderItem $orderItem
          */
         return OrderItem::fromArray([
-            'type' => $this->getItemType($entry['mode']),
+            'type' => $this->getItemType($entry),
             'quantity' => (float) $entry['quantity'],
             'name' => $entry['articleName'],
             'number' => $entry['articleNumber'],
@@ -70,12 +78,7 @@ class OrderItemResponseParser implements OrderItemResponseParserInterface
         ]);
     }
 
-    /**
-     * @param $taxFree
-     *
-     * @throws NotFoundException
-     */
-    private function getVatRateIdentifier(array $entry, $taxFree): string
+    private function getVatRateIdentifier(array $entry, bool $taxFree): string
     {
         if ($taxFree || $entry['taxId'] === 0) {
             /**
@@ -103,14 +106,9 @@ class OrderItemResponseParser implements OrderItemResponseParserInterface
         return $vatRateIdentity->getObjectIdentifier();
     }
 
-    /**
-     * @param int $mode
-     *
-     * @return int
-     */
-    private function getItemType($mode)
+    private function getItemType(array $entry): string
     {
-        switch ($mode) {
+        switch ($entry['mode']) {
             case self::ITEM_TYPE_ID_VOUCHER:
                 return OrderItem::TYPE_VOUCHER;
             case self::ITEM_TYPE_ID_DISCOUNT:
@@ -120,18 +118,19 @@ class OrderItemResponseParser implements OrderItemResponseParserInterface
                     return OrderItem::TYPE_PRODUCT;
                 }
 
+                if ($entry['articleNumber'] === $this->shopwareConfig->get('shippingSurchargeNumber') ||
+                    $entry['articleNumber'] === $this->shopwareConfig->get('sSHIPPINGDISCOUNTNUMBER', 'SHIPPINGDISCOUNT')
+                ) {
+                    return OrderItem::TYPE_SHIPPING_COSTS;
+                }
+
                 return OrderItem::TYPE_PAYMENT_SURCHARGE;
             default:
                 return OrderItem::TYPE_PRODUCT;
         }
     }
 
-    /**
-     * @param bool $taxFree
-     *
-     * @return float|int|mixed
-     */
-    private function getPrice(array $entry, $taxFree)
+    private function getPrice(array $entry, bool $taxFree)
     {
         return $taxFree ? $entry['price'] + (($entry['price'] / 100) * $entry['taxRate']) :
             (float) $entry['price'];

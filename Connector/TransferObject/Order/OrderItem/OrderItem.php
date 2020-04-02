@@ -9,12 +9,12 @@ use SystemConnector\ValueObject\Attribute\Attribute;
 
 class OrderItem extends AbstractValueObject implements AttributableInterface
 {
-    const TYPE_PRODUCT = 'product';
-    const TYPE_VOUCHER = 'voucher';
-    const TYPE_COUPON = 'coupon';
-    const TYPE_DISCOUNT = 'discount';
-    const TYPE_PAYMENT_SURCHARGE = 'payment_surcharge';
-    const TYPE_SHIPPING_COSTS = 'shipping_costs';
+    public const TYPE_PRODUCT = 'product';
+    public const TYPE_VOUCHER = 'voucher';
+    public const TYPE_COUPON = 'coupon';
+    public const TYPE_DISCOUNT = 'discount';
+    public const TYPE_PAYMENT_SURCHARGE = 'payment_surcharge';
+    public const TYPE_SHIPPING_COSTS = 'shipping_costs';
 
     /**
      * @var int
@@ -123,10 +123,7 @@ class OrderItem extends AbstractValueObject implements AttributableInterface
         $this->price = $price;
     }
 
-    /**
-     * @return null|string
-     */
-    public function getVatRateIdentifier()
+    public function getVatRateIdentifier(): ?string
     {
         return $this->vatRateIdentifier;
     }
@@ -150,7 +147,7 @@ class OrderItem extends AbstractValueObject implements AttributableInterface
     /**
      * @param Attribute[] $attributes
      */
-    public function setAttributes(array $attributes)
+    public function setAttributes(array $attributes): void
     {
         $this->attributes = $attributes;
     }
