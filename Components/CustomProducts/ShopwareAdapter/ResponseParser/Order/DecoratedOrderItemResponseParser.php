@@ -50,7 +50,7 @@ class DecoratedOrderItemResponseParser implements OrderItemResponseParserInterfa
                     return $name === $configuration['label'];
                 }));
 
-                if (!$configuration[0]['multi']) {
+                if (!empty($configuration) && !$configuration[0]['multi']) {
                     $entry['articleName'] .= ' [ VALUE: ' . $configuration[0]['value'] . ' ]';
                 }
 
